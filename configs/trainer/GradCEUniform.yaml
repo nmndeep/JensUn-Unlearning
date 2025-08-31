@@ -1,0 +1,8 @@
+defaults:
+  - finetune
+
+handler: GradCEUniform
+method_args:
+  gamma: 1.0
+  alpha: 1.0
+  retain_loss_type: NLL

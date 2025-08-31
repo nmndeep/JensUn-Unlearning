@@ -1,0 +1,12 @@
+LKF_para_retain:
+  handler: QADataset
+  args:
+    hf_args:
+      name: "LKF_para_retain"
+      split: "train"
+      path: "nmndeep/LKF-retain_train_para"
+    question_key: "question"
+    answer_key: "answer"
+    max_length: 512
+
+    

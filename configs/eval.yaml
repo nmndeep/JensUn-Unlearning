@@ -1,0 +1,26 @@
+dataset:
+  name: nmndeep/LKF-forget_eval_para
+  split: train
+
+model:
+  name: meta-llama/Llama-3.2-3B-Instruct
+  path: ./
+  device: cuda  # or "cpu"
+
+output:
+  dir: ./evaluations/evalOutputs
+  evaldir: ./evaluations/evalJudge
+  worstdir: ./evaluations/worstCase
+  gendir: ./evaluations/mmluOutputs
+  repdir: ./evaluations/repOutputs
+  windir: ./evaluations/wrOutputs
+  logdir: ./evaluations/evalLogs
+  save_file: generations.jsonl
+  task_name: pretrained
+  eval_task: forget
+  
+generation:
+  max_new_tokens: 50
+  do_sample: false
+  temperature: 0.0
+  batch_size: 8
