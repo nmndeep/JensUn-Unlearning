@@ -1,6 +1,6 @@
-# LKF dataset and JensUn unlearning
+## JensUn unlearning and the LKF dataset
 
-This repository contains code associated with our paper "JensUn: Effective LLM Unlearning via the Jensen-Shannon Divergence" 
+This repository contains code associated with our paper "Unlearning That Lasts: Utility-Preserving, Robust, and almost Irreversible Forgetting in LLMs" 
 <div align="center">
     
 ![readme_teaser](assets/teaser.png)
