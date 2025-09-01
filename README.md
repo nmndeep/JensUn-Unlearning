@@ -2,8 +2,7 @@
 
 This repository contains code associated with our paper "Unlearning That Lasts: Utility-Preserving, Robust, and almost Irreversible Forgetting in LLMs" 
 <div align="center">
-    
-![readme_teaser](assets/teaser.png)
+<img src="assets/teaser.png" width="800">
 
 </div>
 
