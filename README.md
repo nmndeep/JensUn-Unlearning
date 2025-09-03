@@ -57,7 +57,7 @@ All associated subsets of Lesser Known Facts (LKF) dataset can be found in the f
 ####  Unlearning Evaluations
 
 
-- Add your Gemini API KEY [here](https://github.com/nmndeep/LKF-JensUn/blob/9aab9aae0bec8013e0e1e49217ca18599e3ed935/src/evals/utils.py#L10) for evaluating with the Judge.
+- Add your Gemini API KEY [here](https://github.com/nmndeep/JensUn-Unlearning/blob/ccc02b742c2a0c9b55cd3b3b01aeb7ee0e6c12d1/src/evals/utils.py#L12) for evaluating with the Judge.
 
 - Evaluate the pre-trained Llama-model first, default: Llama-3.2-3B-Instruct
   
