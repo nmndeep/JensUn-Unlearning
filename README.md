@@ -1,8 +1,12 @@
 ## JensUn unlearning and the LKF dataset
 
 This repository contains code associated with our paper "Unlearning That Lasts: Utility-Preserving, Robust, and almost Irreversible Forgetting in LLMs" 
+
+Paper: [https://arxiv.org/abs/2509.02820](https://arxiv.org/abs/2509.02820)
+
+
 <div align="center">
-<img src="assets/teaser.png" width="800">
+<img src="assets/teaser.png" width="700">
 
 </div>
 
@@ -75,8 +79,19 @@ All evaluation results will be stored in a new folder `evaluations`.
 
 
 
-### Acknowledgements
+#### Acknowledgements
 This repository gratefully forks from
 - [https://github.com/locuslab/open-unlearning](https://github.com/locuslab/open-unlearning)
 - [https://github.com/jinzhuoran/RWKU](https://github.com/jinzhuoran/RWKU)
 
+
+### Citation
+If you find this repository useful, please consider citing our paper:
+```bibtex
+@article{singh2025unlearning,
+    title={Unlearning That Lasts: Utility-Preserving, Robust, and Almost Irreversible Forgetting in LLMs},
+    author={Naman Deep Singh and Maximilian Müller and Francesco Croce and Matthias Hein},
+    journal={arXiv preprint arXiv:2509.02820},
+    year={2025}
+}
+```
