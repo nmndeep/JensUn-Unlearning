@@ -4,7 +4,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from trainer.unlearn.base import UnlearnTrainer
-from trainer.utils import TOK_EQ, compute_kl_divergence, jensun_retain_loss, jensun_multitok_loss, js_multitok_loss_with_eos, new_jensun_multitok_loss
+from trainer.utils import TOK_EQ, compute_kl_divergence, jensun_retain_loss, jensun_multitok_loss, kldiv_forget_loss
 
 
 class GradJSDiff(UnlearnTrainer):
@@ -65,23 +65,12 @@ class GradJSDiff(UnlearnTrainer):
     def compute_retain_loss(self, model:AutoModelForCausalLM, retain_inputs:Dict[str, Dict[str, torch.Tensor]]):
         retain_outputs = model(**retain_inputs)
         retain_loss = 0.0
-        if self.retain_loss_type == "NLL":
-            retain_loss += retain_outputs.loss
-        elif self.retain_loss_type == "KL":
-            kl_loss, retain_outputs = compute_kl_divergence(
-                self.model, self.ref_model, retain_inputs
-            )
-            retain_loss += kl_loss
-        elif self.retain_loss_type == "JensUn":
-            js_loss, retain_outputs = jensun_retain_loss(
-                self.model, self.ref_model, retain_inputs
-            )
-            retain_loss += js_loss
-        else:
-            raise NotImplementedError(
-                f"{self.retain_loss_type} not implemented for retain set"
-            )
-        return retain_loss
+        
+        kl_loss, retain_outputs = compute_kl_divergence(
+            self.model, self.ref_model, retain_inputs
+        )
+        retain_loss += kl_loss
+        return retain_loss, retain_outputs.logits
 
     def compute_loss(self, model:AutoModelForCausalLM, inputs:Dict[str, Dict[str, torch.Tensor]], return_outputs:bool=False):
         """Computes the total loss for the JensUn unlearning strategy.
@@ -89,7 +78,7 @@ class GradJSDiff(UnlearnTrainer):
         Args:
             model (`torch.nn.Module`): The language model being trained/unlearned.
             inputs (`Dict[str, Dict[str, torch.Tensor]]`): A dictionary containing
-                input tensors, expected to have two main keys:
+                inpudu -d 1 -hdu -d 1 -ht tensors, expected to have two main keys:
                 - "forget": A dictionary with "input_ids", "attention_mask", and "labels"
                             for the data to be forgotten.
                 - "retain": A dictionary with "input_ids", "attention_mask", and "labels"
@@ -113,7 +102,7 @@ class GradJSDiff(UnlearnTrainer):
         phimod=False
         if "Phi" in str(model):
             phimod=True
-        forget_loss, forget_outputs = jensun_multitok_loss(model, forget_inputs, self.tok_id)
+        forget_loss, forget_outputs = kldiv_forget_loss(model, forget_inputs, self.tok_id)
 
         retain_inputs = inputs["retain"]
         retain_inputs = {
@@ -121,51 +110,54 @@ class GradJSDiff(UnlearnTrainer):
             "attention_mask": retain_inputs["attention_mask"],
             "labels": retain_inputs["labels"],
         }
-        retain_loss = self.compute_retain_loss(model=model, retain_inputs=retain_inputs)
-
+        retain_loss, retain_logits = self.compute_retain_loss(model=model, retain_inputs=retain_inputs)
         loss = self.gamma * forget_loss + self.alpha * retain_loss
 
-        if self.accelerator.is_local_main_process:
-            self.log({
-                "retain_loss": retain_loss.item(),
-                "forget_loss": forget_loss.item(),
-            })
+        # if self.state.global_step % self.args.logging_steps == 0 :
+        #     # Get all trainable parameters
+        #     params = [p for p in model.parameters() if p.requires_grad]
+            
+        #     # Calculate gradients for loss1
+        #     grads1 = torch.autograd.grad(retain_loss, params, retain_graph=True, allow_unused=True)
+            
+        #     # Calculate gradients for loss2
+        #     # No need for retain_graph on the last call if the graph isn't used further here
+        #     grads2 = torch.autograd.grad(forget_loss, params, retain_graph=True, allow_unused=True)
+
+        #     if self.accelerator.is_local_main_process:
+
+        #         # We filter for 'None' grads in case some params are unused
+        #         grad_wrt_forget_logits = torch.autograd.grad(forget_loss, forget_outputs.logits, retain_graph=True, allow_unused=True)[0]
+        #         grad_wrt_retain_logits = torch.autograd.grad(retain_loss, retain_logits, retain_graph=True, allow_unused=True)[0]
+
+        #         # Calculate the L1 norm of the gradient tensor.
+        #         if grad_wrt_forget_logits is not None:
+        #             forget_grad_norm_l1 = torch.linalg.vector_norm(grad_wrt_forget_logits, ord=1)
+        #         else:
+        #             forget_grad_norm_l1 = 0.0 # Handle case where there's no gradient
+
+        #         if grad_wrt_retain_logits is not None:
+        #             retain_grad_norm_l1 = torch.linalg.vector_norm(grad_wrt_retain_logits, ord=1)
+        #         else:
+        #             retain_grad_norm_l1 = 0.0
+
+        #         self.log({
+        #             "retain_loss_norm_l1": retain_grad_norm_l1.item(),
+        #             "forget_loss_norm_l1": forget_grad_norm_l1.item(),
+        #             "retain_loss": retain_loss.item(),
+        #             "forget_loss": forget_loss.item(),
+        #         })
+        # else:
+        self.log({
+            "retain_loss": retain_loss.item(),
+            "forget_loss": forget_loss.item(),
+        })
 
         return (loss, forget_outputs) if return_outputs else loss
 
-class JensUn(GradJSDiff):
+class KLDiv(GradJSDiff):
     """A specialized GradJSDiff trainer using "JensUn" for the retain loss.
        The default JensUn target tokens: 'No Idea'
     """
-    def __init__(self, gamma=1.0, alpha=1.0, retain_loss_type="JensUn", *args, **kwargs):
-        super().__init__(gamma=gamma, alpha=alpha, retain_loss_type='JensUn', *args, **kwargs)
-class JensUnEOT(GradJSDiff):
-    """A specialized GradJSDiff trainer focusing on unlearning based on End-Of-Text (EOT) tokens.
-       The JensUn target tokens: 'No Idea <EOT>'
-    """
-    def __init__(self, gamma=1.0, alpha=1.0, retain_loss_type="JensUn", *args, **kwargs):
-        super().__init__(gamma=gamma, alpha=alpha, retain_loss_type='JensUn', *args, **kwargs)
-class JensUnHash(GradJSDiff):
-    """A specialized GradJSDiff trainer focusing on unlearning for random tokens.
-       The JensUn target tokens: '#'
-    """
-    def __init__(self, gamma=1.0, alpha=1.0, retain_loss_type="JensUn", *args, **kwargs):
-        super().__init__(gamma=gamma, alpha=alpha, retain_loss_type='JensUn', *args, **kwargs)
-class JensUnComma(GradJSDiff):
-    """A specialized GradJSDiff trainer focusing on unlearning for random tokens.
-       The JensUn target tokens: ','
-    """
-    def __init__(self, gamma=1.0, alpha=1.0, retain_loss_type="JensUn",  *args, **kwargs):
-        super().__init__(gamma=gamma, alpha=alpha, retain_loss_type='JensUn', *args, **kwargs)
-class JensUnLongString(GradJSDiff):
-    """A specialized GradJSDiff trainer focusing on unlearning for random tokens.
-       The JensUn target tokens: ' '
-    """
-    def __init__(self, gamma=1.0, alpha=1.0, retain_loss_type="JensUn", *args, **kwargs):
-        super().__init__(gamma=gamma, alpha=alpha, retain_loss_type='JensUn', *args, **kwargs)
-class JensUnWhiteSpace(GradJSDiff):
-    """A specialized GradJSDiff trainer focusing on unlearning for retain_loss_typeandom tokens.
-       The JensUn target tokens: ' '
-    """
-    def __init__(self, gamma=1.0, alpha=1.0, retain_loss_type="JensUn", *args, **kwargs):
-        super().__init__(gamma=gamma, alpha=alpha, retain_loss_type='JensUn', *args, **kwargs)
+    def __init__(self, gamma=1.0, alpha=1.0, retain_loss_type="KL", *args, **kwargs):
+        super().__init__(gamma=gamma, alpha=alpha, retain_loss_type='KL', *args, **kwargs)
