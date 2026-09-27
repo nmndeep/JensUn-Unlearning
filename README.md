@@ -1,4 +1,4 @@
-## JensUn unlearning and the LKF dataset
+## JensUn unlearning and the LPF dataset
 
 This repository contains code associated with our paper "Unlearning That Lasts: Utility-Preserving, Robust, and almost Irreversible Forgetting in LLMs" 
 
@@ -24,14 +24,14 @@ Paper: [https://arxiv.org/abs/2509.02820](https://arxiv.org/abs/2509.02820)
 
 ---------------------------------------------
 
-### LKF dataset
+### LPF dataset
 
-All associated subsets of Lesser Known Facts (LKF) dataset can be found in the following [HF-hub collection](https://huggingface.co/collections/nmndeep/lkf-unlearning-686e5e282802260ab336b7ec)
+All associated subsets of Lesser Known Facts (LPF) dataset can be found in the following [HF-hub collection](https://huggingface.co/collections/nmndeep/LPF-unlearning-686e5e282802260ab336b7ec)
 
-- For forget LKF has: Forget-Standard, Forget-train-paraphrases, Forget-eval-paraphrases
-- For retain LKF has: Retain-Standard, Retain-Train-paraphrases, Retain-eval-paraphrases
+- For forget LPF has: Forget-Standard, Forget-train-paraphrases, Forget-eval-paraphrases
+- For retain LPF has: Retain-Standard, Retain-Train-paraphrases, Retain-eval-paraphrases
 - Subset used for Relearning experiments.
-- The prompts, paraphrase-generation scripts can be found in [LKF_creation](LKF_creation)
+- The prompts, paraphrase-generation scripts can be found in [LPF_creation](LKF_creation)
 
 ---------------------------------------------
 
