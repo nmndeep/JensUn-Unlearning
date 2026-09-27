@@ -40,7 +40,7 @@ All associated subsets of Lesser Known Facts (LPF) dataset can be found in the f
 ---------------------------------------------
 #### Fine-tuning for Unlearning
 
-- To unlearn with JensUn on LKF and evaluate on all tasks from our work:
+- To unlearn with JensUn on LPF and evaluate on all tasks from our work:
 
 ```bash
     bash scripts/lkf_unlearn.sh
